@@ -32,7 +32,7 @@ class MasterTicketsModule(Component):
     use_gs = BoolOption('mastertickets', 'use_gs', default=False,
                         doc='If enabled, use ghostscript to produce nicer output.')
     
-    FIELD_XPATH = 'div[@id="ticket"]/table[@class="properties"]/td[@headers="h_%s"]/text()'
+    FIELD_XPATH = '//div[@id="ticket"]/table[@class="properties"]//td[@headers="h_%s"]/text()'
     fields = set(['blocking', 'blockedby'])
     
     # IRequestFilter methods

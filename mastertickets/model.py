@@ -5,7 +5,7 @@ from datetime import datetime
 
 from trac.ticket.model import Ticket
 from trac.util.compat import set, sorted
-from trac.util.datefmt import utc, to_timestamp
+from trac.util.datefmt import utc, to_utimestamp
 
 class TicketLinks(object):
     """A model for the ticket links used MasterTickets."""
@@ -31,7 +31,7 @@ class TicketLinks(object):
         """Save new links."""
         if when is None:
             when = datetime.now(utc)
-        when_ts = to_timestamp(when)
+        when_ts = to_utimestamp(when)
         
         handle_commit = False
         if db is None:
