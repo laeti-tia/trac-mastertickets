@@ -165,6 +165,6 @@ class MasterTicketsSystem(Component):
     # Internal methods
     def _prepare_links(self, tkt, db):
         links = TicketLinks(self.env, tkt, db)
-        links.blocking = set(int(n) for n self.NUMBERS_RE.findall(tkt['blocking'] or ''))
-        links.blocked_by = set(int(n) for n self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
+        links.blocking = set(int(n) for n in self.NUMBERS_RE.findall(tkt['blocking'] or ''))
+        links.blocked_by = set(int(n) for n in self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
         return links
