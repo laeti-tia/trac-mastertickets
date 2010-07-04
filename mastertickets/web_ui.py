@@ -146,7 +146,7 @@ class MasterTicketsModule(Component):
             
             if self.use_gs:
                 ps = g.render(self.dot_path, 'ps2')
-                gs = subprocess.Popen([self.gs_path, '-q', '-dTextAlphaBits=4', '-dGraphicsAlphaBits=4', '-sDEVICE=png16m', '-o', '%stdout%', '-'], 
+                gs = subprocess.Popen([self.gs_path, '-q', '-dTextAlphaBits=4', '-dGraphicsAlphaBits=4', '-sDEVICE=png16m', '-sOutputFile=%stdout%', '-'], 
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 img, err = gs.communicate(ps)
                 if err:
