@@ -134,14 +134,14 @@ class MasterTicketsSystem(Component):
         
         # Check that ticket does not have itself as a blocker 
         if id in links.blocking | links.blocked_by:
-            yield None, 'This ticket is blocking itself'
+            yield 'blocked_by', 'This ticket is blocking itself'
             return
 
         # Check that there aren't any blocked_by in blocking or their parents
         blocking = links.blocking.copy()
         while len(blocking) > 0:
             if len(links.blocked_by & blocking) > 0:
-                yield None, 'This ticket has circular dependencies'
+                yield 'blocked_by', 'This ticket has circular dependencies'
                 return
             new_blocking = set()
             for link in blocking:
