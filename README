@@ -2,6 +2,8 @@ Notes
 =====
 Adds basic ticket dependencies for Trac.
 
+Note: MasterTickets 3.0 requires Trac 0.12 or higher.
+
 What is it?
 -----------
 This plugin adds "blocks" and "blocked by" fields to each ticket, enabling you
