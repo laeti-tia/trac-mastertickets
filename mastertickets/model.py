@@ -20,11 +20,11 @@ class TicketLinks(object):
         cursor = db.cursor()
         
         cursor.execute('SELECT dest FROM mastertickets WHERE source=%s ORDER BY dest', (self.tkt.id,))
-        self.blocking = set([num for num, in cursor])
+        self.blocking = set([int(num) for num, in cursor])
         self._old_blocking = copy.copy(self.blocking)
         
         cursor.execute('SELECT source FROM mastertickets WHERE dest=%s ORDER BY source', (self.tkt.id,))
-        self.blocked_by = set([num for num, in cursor])
+        self.blocked_by = set([int(num) for num, in cursor])
         self._old_blocked_by = copy.copy(self.blocked_by)
         
     def save(self, author, comment='', when=None, db=None):
@@ -39,10 +39,13 @@ class TicketLinks(object):
             handle_commit = True
         cursor = db.cursor()
         
+        new_blocking = set(int(n) for n in self.blocking)
+        new_blocked_by = set(int(n) for n in self.blocked_by)
+        
         to_check = [
             # new, old, field
-            (self.blocking, self._old_blocking, 'blockedby', ('source', 'dest')),
-            (self.blocked_by, self._old_blocked_by, 'blocking', ('dest', 'source')),
+            (new_blocking, self._old_blocking, 'blockedby', ('source', 'dest')),
+            (new_blocked_by, self._old_blocked_by, 'blocking', ('dest', 'source')),
         ]
         
         for new_ids, old_ids, field, sourcedest in to_check:
@@ -59,7 +62,7 @@ class TicketLinks(object):
                 
                 if update_field is not None:
                     cursor.execute('SELECT value FROM ticket_custom WHERE ticket=%s AND name=%s',
-                                   (n, field))
+                                   (n, str(field)))
                     old_value = (cursor.fetchone() or ('',))[0]
                     new_value = [x.strip() for x in old_value.split(',') if x.strip()]
                     update_field(new_value)

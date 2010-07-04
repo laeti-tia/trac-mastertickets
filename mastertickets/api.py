@@ -57,11 +57,19 @@ class MasterTicketsSystem(Component):
                 try:
                     cursor.execute('SELECT * FROM %s'%tbl.name)
                     old_data[tbl.name] = ([d[0] for d in cursor.description], cursor.fetchall())
+                except Exception, e:
+                    if 'OperationalError' not in e.__class__.__name__:
+                        raise e # If it is an OperationalError, keep going
+                try:
                     cursor.execute('DROP TABLE %s'%tbl.name)
                 except Exception, e:
                     if 'OperationalError' not in e.__class__.__name__:
                         raise e # If it is an OperationalError, just move on to the next table
-                            
+
+        for vers, migration in db_default.migrations:
+            if self.found_db_version in vers:
+                self.log.info('MasterTicketsSystem: Running migration %s', migration.__doc__)
+                migration(old_data)          
                 
         for tbl in db_default.tables:
             for sql in db_manager.to_sql(tbl):
@@ -100,8 +108,8 @@ class MasterTicketsSystem(Component):
         db = self.env.get_db_cnx()
         
         links = TicketLinks(self.env, tkt, db)
-        links.blocking = set(self.NUMBERS_RE.findall(tkt['blocking'] or ''))
-        links.blocked_by = set(self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
+        links.blocking = set(int(n) for n self.NUMBERS_RE.findall(tkt['blocking'] or ''))
+        links.blocked_by = set(int(n) for n self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
         links.save(author, comment, tkt.time_changed, db)
         
         db.commit()
