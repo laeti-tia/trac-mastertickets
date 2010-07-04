@@ -10,6 +10,7 @@ from trac.util.compat import set, sorted
 
 import db_default
 from model import TicketLinks
+from trac.ticket.model import Ticket
 
 class MasterTicketsSystem(Component):
     """Central functionality for the MasterTickets plugin."""
@@ -106,12 +107,8 @@ class MasterTicketsSystem(Component):
 
     def ticket_changed(self, tkt, comment, author, old_values):
         db = self.env.get_db_cnx()
-        
-        links = TicketLinks(self.env, tkt, db)
-        links.blocking = set(int(n) for n self.NUMBERS_RE.findall(tkt['blocking'] or ''))
-        links.blocked_by = set(int(n) for n self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
+        links = self._prepare_links(tkt, db)
         links.save(author, comment, tkt.time_changed, db)
-        
         db.commit()
 
     def ticket_deleted(self, tkt):
@@ -132,6 +129,26 @@ class MasterTicketsSystem(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
+        id = unicode(ticket.id)
+        links = self._prepare_links(ticket, db)
+        
+        # Check that ticket does not have itself as a blocker 
+        if id in links.blocking | links.blocked_by:
+            yield None, 'This ticket is blocking itself'
+            return
+
+        # Check that there aren't any blocked_by in blocking or their parents
+        blocking = links.blocking.copy()
+        while len(blocking) > 0:
+            if len(links.blocked_by & blocking) > 0:
+                yield None, 'This ticket has circular dependencies'
+                return
+            new_blocking = set()
+            for link in blocking:
+                tmp_tkt = Ticket(self.env, link)
+                new_blocking |= TicketLinks(self.env, tmp_tkt, db).blocking
+            blocking = new_blocking
+        
         for field in ('blocking', 'blockedby'):
             try:
                 ids = self.NUMBERS_RE.findall(ticket[field] or '')
@@ -144,3 +161,10 @@ class MasterTicketsSystem(Component):
             except Exception, e:
                 self.log.debug('MasterTickets: Error parsing %s "%s": %s', field, ticket[field], e)
                 yield field, 'Not a valid list of ticket IDs'
+
+    # Internal methods
+    def _prepare_links(self, tkt, db):
+        links = TicketLinks(self.env, tkt, db)
+        links.blocking = set(int(n) for n self.NUMBERS_RE.findall(tkt['blocking'] or ''))
+        links.blocked_by = set(int(n) for n self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
+        return links
