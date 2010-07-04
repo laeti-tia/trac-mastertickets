@@ -1,0 +1,82 @@
+Notes
+=====
+Adds basic ticket dependencies for Trac.
+
+What is it?
+-----------
+This plugin adds "blocks" and "blocked by" fields to each ticket, enabling you
+to express dependencies between tickets. It also provides a graphviz-based
+dependency-graph feature for those tickets having dependencies specified,
+allowing you to visually understand the dependency tree. The dependency graph
+is viewable by clicking 'depgraph' in the context (in the upper right corner)
+menu when viewing a ticket that blocks or is blocked by another ticket.
+
+What is it not?
+---------------
+* It does not provide ticket-hiding for sub-tasks of a top-level ticket.  
+
+  * There is no orthogonal parent/child relationship possible
+
+  * You cannot view the descriptions of tickets depending on the current
+    ticket
+
+  * In fact, there are no explicit features that can assist you with sub-task
+    management
+
+  * Although it would be cool.
+
+* It does not allow you to create a dependent ticket from the current ticket
+
+* It does not include reporting features to show how tasks are interrelated
+  (other than the dependency graph already described above).
+
+Configuration
+=============
+To use this plugin you must configure two custom fields named ``blocking``
+and ``blocked_by``.
+
+All other configuration options go in the ``[mastertickets]`` section.
+
+``dot_path`` : *optional, default: dot*
+    Path to the dot executable. This is only used for the dependency graph.
+
+``use_gs`` : *optional, default: False*
+    If enabled, use ghostscript to produce a nicer dependency graph.
+
+``gs_path`` : *optional, default: gs*
+    Path to the ghostscript executable.
+
+To enable the plugin::
+
+    [components]
+    mastertickets.* = enabled
+    
+    [ticket-custom]
+    blocking = text
+    blocking.label = Blocking
+    blockedby = text
+    blockedby.label = Blocked By
+
+Custom fields
+-------------
+While the two field names must be ``blocking`` and ``blocked_by``, you are
+free to use any text for the field labels.
+
+Example
+=======
+
+To use a locally-built graphviz::
+
+    [mastertickets]
+    dot_path = /usr/local/bin/dot
+    
+    [components]
+    mastertickets.* = enabled
+    
+    [ticket-custom]
+    blocking = text
+    blocking.label = Blocking
+    blockedby = text
+    blockedby.label = Blocked By
+
+

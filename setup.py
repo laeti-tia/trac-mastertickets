@@ -5,16 +5,17 @@ from setuptools import setup
 
 setup(
     name = 'TracMasterTickets',
-    version = '2.1.3',
+    version = '3.0',
     packages = ['mastertickets'],
     package_data = { 'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
     description = 'Provides support for ticket dependencies and master tickets.',
+    long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
     license = 'BSD',
     keywords = 'trac plugin ticket dependencies master',
-    url = 'http://trac-hacks.org/wiki/MasterTicketsPlugin',
+    url = 'http://github.com/coderanger/trac-mastertickets',
     classifiers = [
         'Framework :: Trac',
         #'Development Status :: 1 - Planning',
@@ -31,7 +32,7 @@ setup(
         'Programming Language :: Python',
     ],
     
-    install_requires = ['Trac>=0.11', 'Genshi>=0.5'],
+    install_requires = ['Trac>=0.12'],
 
     entry_points = {
         'trac.plugins': [
