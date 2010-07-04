@@ -14,9 +14,9 @@ tables = [
 
 def convert_to_int(data):
     """Convert both source and dest in the mastertickets table to ints."""
-    for row in data['mastertickets'][1]:
-        for i, (n1, n2) in enumerate(row):
-            row[i] = [int(n1), int(n2)]
+    rows = data['mastertickets'][1]
+    for i, (n1, n2) in enumerate(rows):
+        rows[i] = [int(n1), int(n2)]
 
 migrations = [
     (xrange(1,2), convert_to_int),
