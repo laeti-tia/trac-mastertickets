@@ -41,6 +41,9 @@ class MasterTicketsModule(Component):
         
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/ticket/'):
+            # In case of an invalid ticket, the data is invalid
+            if not data:
+                return template, data, content_type
             tkt = data['ticket']
             links = TicketLinks(self.env, tkt)
             
@@ -60,7 +63,9 @@ class MasterTicketsModule(Component):
             if links:
                 add_ctxtnav(req, 'Depgraph', req.href.depgraph(tkt.id))
             
-            for change in data.get('changes', []):
+            for change in data.get('changes', {}):
+                if not change.has_key('fields'):
+                    continue
                 for field, field_data in change['fields'].iteritems():
                     if field in self.fields:
                         if field_data['new'].strip():
