@@ -7,7 +7,7 @@ name = 'mastertickets'
 version = 1
 tables = [
     Table('mastertickets', key=('source','dest'))[
-        Column('source'),
-        Column('dest'),
+        Column('source', type='int'),
+        Column('dest', type='int'),
     ],
 ]
