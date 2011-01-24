@@ -10,6 +10,7 @@ from trac.util.compat import set, sorted
 
 import db_default
 from model import TicketLinks
+from trac.ticket.model import Ticket
 
 class MasterTicketsSystem(Component):
     """Central functionality for the MasterTickets plugin."""
@@ -57,12 +58,22 @@ class MasterTicketsSystem(Component):
                 try:
                     cursor.execute('SELECT * FROM %s'%tbl.name)
                     old_data[tbl.name] = ([d[0] for d in cursor.description], cursor.fetchall())
+                except Exception, e:
+                    if 'OperationalError' not in e.__class__.__name__:
+                        raise e # If it is an OperationalError, keep going
+                try:
                     cursor.execute('DROP TABLE %s'%tbl.name)
                 except Exception, e:
                     if 'OperationalError' not in e.__class__.__name__:
                         raise e # If it is an OperationalError, just move on to the next table
-                            
-                
+                           
+                           
+        for vers, migration in db_default.migrations:
+            if self.found_db_version in vers:
+                self.log.info('MasterTicketsSystem: Running migration %s', migration.__doc__)
+                migration(old_data) 
+
+
         for tbl in db_default.tables:
             for sql in db_manager.to_sql(tbl):
                 cursor.execute(sql)
@@ -98,12 +109,8 @@ class MasterTicketsSystem(Component):
 
     def ticket_changed(self, tkt, comment, author, old_values):
         db = self.env.get_db_cnx()
-        
-        links = TicketLinks(self.env, tkt, db)
-        links.blocking = set(self.NUMBERS_RE.findall(tkt['blocking'] or ''))
-        links.blocked_by = set(self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
+        links = self._prepare_links(tkt, db)
         links.save(author, comment, tkt.time_changed, db)
-        
         db.commit()
 
     def ticket_deleted(self, tkt):
@@ -124,6 +131,26 @@ class MasterTicketsSystem(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
+        id = unicode(ticket.id)
+        links = self._prepare_links(ticket, db)
+
+        # Check that ticket does not have itself as a blocker 
+        if id in links.blocking | links.blocked_by:
+            yield 'blocked_by', 'This ticket is blocking itself'
+            return
+
+        # Check that there aren't any blocked_by in blocking or their parents
+        blocking = links.blocking.copy()
+        while len(blocking) > 0:
+            if len(links.blocked_by & blocking) > 0:
+                yield 'blocked_by', 'This ticket has circular dependencies'
+                return
+            new_blocking = set()
+            for link in blocking:
+                tmp_tkt = Ticket(self.env, link)
+                new_blocking |= TicketLinks(self.env, tmp_tkt, db).blocking
+            blocking = new_blocking
+
         for field in ('blocking', 'blockedby'):
             try:
                 ids = self.NUMBERS_RE.findall(ticket[field] or '')
@@ -136,3 +163,11 @@ class MasterTicketsSystem(Component):
             except Exception, e:
                 self.log.debug('MasterTickets: Error parsing %s "%s": %s', field, ticket[field], e)
                 yield field, 'Not a valid list of ticket IDs'
+                
+    #  Internal methods
+    def _prepare_links(self, tkt, db):
+        links = TicketLinks(self.env, tkt, db)
+        links.blocking = set(int(n) for n in self.NUMBERS_RE.findall(tkt['blocking'] or ''))
+        links.blocked_by = set(int(n) for n in self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
+        return links
+

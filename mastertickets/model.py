@@ -39,6 +39,9 @@ class TicketLinks(object):
             handle_commit = True
         cursor = db.cursor()
         
+        new_blocking = set(int(n) for n in self.blocking)
+        new_blocked_by = set(int(n) for n in self.blocked_by)
+
         to_check = [
             # new, old, field
             (self.blocking, self._old_blocking, 'blockedby', ('source', 'dest')),
@@ -59,7 +62,7 @@ class TicketLinks(object):
                 
                 if update_field is not None:
                     cursor.execute('SELECT value FROM ticket_custom WHERE ticket=%s AND name=%s',
-                                   (n, field))
+                                   (n, str(field)))
                     old_value = (cursor.fetchone() or ('',))[0]
                     new_value = [x.strip() for x in old_value.split(',') if x.strip()]
                     update_field(new_value)
